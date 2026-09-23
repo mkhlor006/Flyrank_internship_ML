@@ -7,6 +7,53 @@
     <title>Content Refresh Prioritisation Using Machine Learning</title>
 
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .chart {
+            margin: 25px 0;
+        }
+
+        .chart-row {
+            margin-bottom: 18px;
+        }
+
+        .chart-label {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .bar-container {
+            width: 100%;
+            background: #eeeeee;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .bar {
+            height: 32px;
+            background: #4b5563;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-weight: bold;
+            min-width: 45px;
+        }
+
+        .figure-caption {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #555;
+            font-style: italic;
+        }
+
+        .note {
+            background: #f8f9fa;
+            border-left: 4px solid #666;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 
 <body>
@@ -36,15 +83,15 @@
             content pages for human refresh review using search visibility,
             engagement and content characteristics. The analysis uses the
             FlyRank internship dataset and compares a learned logistic regression
-            model with a rule-based baseline. The model was evaluated using
-            client-grouped validation to reduce the risk of information leakage
-            between training and test clients. On the client-grouped split, the
-            learned model achieved a Precision@50 of 0.40 compared with 0.44 for
-            the baseline under the measured validation setup. These results show
-            that validation design materially affects measured performance and
-            that model outputs should be treated as decision-support signals
-            rather than proof that refreshing a page will improve its future
-            performance.
+            model with a rule-based baseline. Under the original client-holdout
+            evaluation, the logistic regression model achieved a measured
+            Precision@50 of 0.76 compared with 0.44 for the rule-based baseline.
+            A separate validation audit showed that measured performance was
+            sensitive to the validation design, with Precision@50 changing from
+            0.90 under a row-level split to 0.40 under a client-grouped split.
+            These results support using the model as decision-support for human
+            review rather than treating model predictions as proof that refreshing
+            a page will improve its future performance.
         </p>
     </section>
 
@@ -126,17 +173,18 @@
 
         <p>
             Logistic Regression, Decision Tree and Random Forest models were
-            compared. Logistic Regression was selected as the learned model for
-            subsequent analysis because it produced a measured Precision@50 of
-            0.76 under the original client-holdout evaluation.
+            compared. Under the original client-holdout evaluation, Logistic
+            Regression achieved a measured Precision@50 of 0.76, while the
+            Decision Tree and Random Forest achieved 0.68 and 0.44 respectively.
         </p>
 
         <h3>3.5 Validation</h3>
 
         <p>
-            A client-grouped split was used as the more cautious validation design,
-            with clients held out from training rather than allowing observations
-            from the same client to appear in both sets.
+            A client-grouped split was used in the validation audit as a more
+            cautious assessment of generalisation to unseen clients. Clients
+            were held out from training so that the same client did not appear
+            in both the training and test sets.
         </p>
 
         <h3>3.6 Leakage Checks</h3>
@@ -152,7 +200,12 @@
     <section>
         <h2>4. Results</h2>
 
-        <h3>Baseline and Model Comparison</h3>
+        <h3>4.1 Baseline and Model Comparison</h3>
+
+        <p>
+            Under the original client-holdout experiment, the following
+            Precision@50 values were measured:
+        </p>
 
         <table>
             <thead>
@@ -185,12 +238,66 @@
             </tbody>
         </table>
 
+
+        <div class="chart">
+            <div class="chart-row">
+                <div class="chart-label">
+                    Rule-based baseline — 0.44
+                </div>
+                <div class="bar-container">
+                    <div class="bar" style="width: 44%;">
+                        0.44
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-label">
+                    Logistic Regression — 0.76
+                </div>
+                <div class="bar-container">
+                    <div class="bar" style="width: 76%;">
+                        0.76
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-label">
+                    Decision Tree — 0.68
+                </div>
+                <div class="bar-container">
+                    <div class="bar" style="width: 68%;">
+                        0.68
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-label">
+                    Random Forest — 0.44
+                </div>
+                <div class="bar-container">
+                    <div class="bar" style="width: 44%;">
+                        0.44
+                    </div>
+                </div>
+            </div>
+
+            <p class="figure-caption">
+                Figure 1. Measured Precision@50 under the original client-holdout
+                evaluation.
+            </p>
+        </div>
+
+
         <p>
-            Under the original client-holdout experiment, Logistic Regression
-            produced the highest measured Precision@50 among the learned models.
+            Under this evaluation, Logistic Regression produced the highest
+            measured Precision@50 among the learned models tested.
         </p>
 
-        <h3>Validation Sensitivity</h3>
+
+        <h3>4.2 Validation Sensitivity</h3>
 
         <table>
             <thead>
@@ -213,11 +320,42 @@
             </tbody>
         </table>
 
-        <p>
-            The difference demonstrates why validation design matters. The
-            row-level result is substantially more optimistic than the
-            client-grouped result measured on the same prepared modelling data.
-        </p>
+
+        <div class="chart">
+            <div class="chart-row">
+                <div class="chart-label">
+                    Row-level split — 0.90
+                </div>
+                <div class="bar-container">
+                    <div class="bar" style="width: 90%;">
+                        0.90
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-label">
+                    Client-grouped split — 0.40
+                </div>
+                <div class="bar-container">
+                    <div class="bar" style="width: 40%;">
+                        0.40
+                    </div>
+                </div>
+            </div>
+
+            <p class="figure-caption">
+                Figure 2. Measured Precision@50 under two validation designs.
+            </p>
+        </div>
+
+
+        <div class="note">
+            <strong>Interpretation:</strong>
+            The difference demonstrates that validation design materially affects
+            measured performance. The row-level result is more optimistic than
+            the client-grouped result measured during the validation audit.
+        </div>
     </section>
 
 
@@ -305,7 +443,7 @@
         </p>
 
         <p>
-            <a href="https://flyrank.ai" target="_blank">
+            <a href="https://flyrank.ai" target="_blank" rel="noopener noreferrer">
                 FlyRank
             </a>
         </p>
