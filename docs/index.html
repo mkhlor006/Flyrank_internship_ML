@@ -79,44 +79,47 @@
         <h2>Abstract</h2>
 
         <p>
-            This study investigates whether machine learning can help prioritise
-            content pages for human refresh review using search visibility,
-            engagement and content characteristics. The analysis uses the
-            FlyRank internship dataset and compares a learned logistic regression
-            model with a rule-based baseline. Under the original client-holdout
-            evaluation, the logistic regression model achieved a measured
-            Precision@50 of 0.76 compared with 0.44 for the rule-based baseline.
-            A separate validation audit showed that measured performance was
-            sensitive to the validation design, with Precision@50 changing from
-            0.90 under a row-level split to 0.40 under a client-grouped split.
-            These results support using the model as decision-support for human
-            review rather than treating model predictions as proof that refreshing
-            a page will improve its future performance.
-        </p>
+    This study investigates whether machine learning can help FlyRank content teams
+    prioritise which pages should receive human refresh review when reviewing a large
+    content portfolio. The analysis uses the FlyRank internship dataset and combines
+    historical search visibility, engagement and content characteristics to compare a
+    learned Logistic Regression model with a rule-based baseline. Under the original
+    client-holdout evaluation, the Logistic Regression model achieved a measured
+    Precision@50 of 0.76 compared with 0.44 for the rule-based baseline. A separate
+    validation audit showed that measured performance was sensitive to validation
+    design, with Precision@50 of 0.90 under a row-level split and 0.40 under a
+    client-grouped split. The result is a decision-support workflow for prioritising
+    human review, not evidence that refreshing a page will itself cause better
+    traffic, clicks or conversions.
+</p>
     </section>
 
 
     <section>
-        <h2>1. Introduction / Problem Statement</h2>
+    <h2>1. Introduction / Problem Statement</h2>
 
-        <p>
-            Content teams may manage large numbers of pages and cannot manually
-            review every page with the same level of attention. This creates a
-            prioritisation problem: which pages should receive human review first?
-        </p>
+    <p>
+        In a content operation such as FlyRank's, a team may have many pages that
+        could potentially be reviewed for improvement, but review time is limited.
+        The operational question is therefore not simply which pages have changed,
+        but which pages should be placed near the front of the human review queue.
+    </p>
 
-        <p>
-            This project investigates whether historical search-performance,
-            engagement and content features can be used to rank pages for
-            potential content refresh review.
-        </p>
+    <p>
+        This project treats content refresh prioritisation as a ranking problem:
+        use observable search-performance, engagement and content signals to order
+        pages for potential review. The workflow is designed for a realistic
+        decision-support setting in which a reviewer can inspect the evidence behind
+        a recommendation before deciding whether any content change is appropriate.
+    </p>
 
-        <p>
-            The objective is not to claim that a model can guarantee a performance
-            improvement after a refresh. Instead, the model provides a
-            reproducible prioritisation mechanism that can support human review.
-        </p>
-    </section>
+    <p>
+        The case study therefore focuses on prioritisation rather than guaranteed
+        recovery. A model score identifies pages that may deserve attention first;
+        it does not establish that a refresh will cause improved performance, and
+        the final action remains with the human reviewer.
+    </p>
+</section>
 
 
     <section>
