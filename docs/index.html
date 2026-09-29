@@ -123,81 +123,152 @@
 
 
     <section>
-        <h2>2. Data</h2>
+    <h2>2. Data</h2>
 
-        <p>
-            The project uses the FlyRank ML Internship dataset. The warehouse
-            contains content, client and daily performance information, including
-            Google Search Console and Google Analytics 4 signals.
-        </p>
+    <p>
+        The analysis uses two related parts of the FlyRank internship data
+        workflow. Warehouse development and signal auditing used the fixed
+        Hugging Face release <code>FlyRank/internship-warehouse</code>,
+        build <code>flyrank_pseudonymized_warehouse_release_v20260703</code>.
+        The warehouse contains pseudonymised search and content-performance data
+        and is the reference release for the internship.
+    </p>
 
-        <p>
-            Development work used a mid-panel warehouse period rather than the
-            final sealed test month. A prepared modelling dataset containing
-            30,000 observations was used for the machine-learning experiments.
-        </p>
+    <p>
+        For the warehouse-based development and audit work, the main table used
+        was <code>fact_content_daily_performance</code>. The development slice
+        used was March 2026 rather than the final month. The warehouse daily
+        facts run from 27 January 2025 through 30 June 2026. The final sealed
+        month was not used as the development slice.
+    </p>
 
-        <p>
-            The feature set included search-volume and competition information,
-            content characteristics, historical impressions and clicks,
-            sessions, position, engagement and traffic-related signals.
-        </p>
-    </section>
+    <p>
+        The supervised modelling experiments used the anonymised starter
+        playground included in the repository:
+        <code>data/raw/content_refresh_anonymized.csv</code>. After the
+        preparation pipeline and eligibility rules, this produced the
+        30,000-observation modelling dataset used for the model comparison and
+        validation experiments.
+    </p>
+
+    <h3>2.1 Observation Grain</h3>
+
+    <p>
+        The prepared modelling dataset contains one row per pseudonymised content
+        item for the modelling population. The warehouse daily performance table
+        has a daily client-by-content grain, so the warehouse analysis was kept
+        separate from the prepared 30,000-row modelling dataset rather than
+        flattening the full daily warehouse without an explicit window.
+    </p>
+
+    <h3>2.2 Fields and Exclusions</h3>
+
+    <p>
+        Predictive inputs were based on observable search, traffic, engagement and
+        content characteristics available before the modelling decision. Numeric
+        features included historical impressions, clicks, sessions, AI sessions,
+        content age, days since update, CTR, average position, engagement and
+        scroll measures, together with search-volume and competition fields.
+        Categorical features included content type, search intent, competition,
+        freshness, content-length, impression and position tiers.
+    </p>
+
+    <p>
+        The target <code>is_declining_label</code>, together with
+        <code>trend_direction</code> and <code>trend_pct</code>, was excluded
+        from the predictive inputs because these fields are directly related to
+        the decline definition. <code>content_id</code> and
+        <code>client_id</code> were retained for tracing and grouped validation
+        but were not used as model predictors. Provider/model metadata such as
+        <code>provider_used</code> and <code>model_used</code> was also excluded
+        from the predictive feature set.
+    </p>
+
+    <p>
+        No client names, domains, raw URLs, private queries, credentials or raw
+        exports were included in the public paper. The warehouse release itself
+        is pseudonymised and public-safe for the internship workflow.
+    </p>
+</section>
 
 
     <section>
-        <h2>3. Methodology</h2>
+    <h2>3. Methodology</h2>
 
-        <h3>3.1 Feature Construction</h3>
+    <h3>3.1 Feature Construction</h3>
 
-        <p>
-            Features were constructed from historical performance and content
-            attributes. Log transformations were used for highly skewed traffic
-            measures such as impressions, clicks, sessions and AI sessions.
-        </p>
+    <p>
+        The modelling feature vector was generated with the repository's
+        feature-preparation pipeline. The final prepared dataset contained
+        30,000 observations and 52 columns, including identifiers, predictive
+        features, engineered fields and the target label.
+    </p>
 
-        <h3>3.2 Label Definition</h3>
+    <p>
+        Predictive inputs combined numeric and categorical content/search
+        features. Highly skewed traffic variables were represented with
+        log-transformed versions, while categorical fields were handled as
+        categorical variables in the modelling pipeline.
+    </p>
 
-        <p>
-            The prediction target was <code>is_declining_label</code>, representing
-            the decline condition used in the prepared training data.
-        </p>
+    <h3>3.2 Label Definition</h3>
 
-        <h3>3.3 Baseline</h3>
+    <p>
+        The target was <code>is_declining_label</code>, defined in the starter
+        preparation workflow as <code>trend_direction == "down"</code>. This is
+        a proxy label for the current-window decline condition, not a
+        future-looking outcome. It should therefore be interpreted as a
+        supervised ranking target for the internship workflow rather than proof
+        that a page will decline in the future or that a refresh will reverse a
+        decline.
+    </p>
 
-        <p>
-            A rule-based refresh prioritisation score was established before
-            comparing learned models. The baseline used visibility, freshness,
-            position-opportunity and content-depth signals to produce an ordered
-            review queue.
-        </p>
+    <h3>3.3 Rule-Based Baseline</h3>
 
-        <h3>3.4 Model</h3>
+    <p>
+        A transparent rule-based refresh score was established before comparing
+        learned models. It combines visibility, freshness risk,
+        position-opportunity and content-depth signals and produces an ordered
+        review queue with reason codes.
+    </p>
 
-        <p>
-            Logistic Regression, Decision Tree and Random Forest models were
-            compared. Under the original client-holdout evaluation, Logistic
-            Regression achieved a measured Precision@50 of 0.76, while the
-            Decision Tree and Random Forest achieved 0.68 and 0.44 respectively.
-        </p>
+    <h3>3.4 Learned Models</h3>
 
-        <h3>3.5 Validation</h3>
+    <p>
+        Logistic Regression, Decision Tree and Random Forest models were
+        compared. The selected Logistic Regression pipeline used standardisation
+        for numeric inputs and balanced class weights, with a maximum of 1,000
+        iterations. Model selection focused on Precision@50 because the
+        operational decision is about how useful the top-ranked review queue is.
+    </p>
 
-        <p>
-            A client-grouped split was used in the validation audit as a more
-            cautious assessment of generalisation to unseen clients. Clients
-            were held out from training so that the same client did not appear
-            in both the training and test sets.
-        </p>
+    <h3>3.5 Validation Design</h3>
 
-        <h3>3.6 Leakage Checks</h3>
+    <p>
+        The original model comparison used a client-holdout split: whole clients
+        were assigned to either training or testing, with no client overlap
+        between the two sets. The training set contained 26,581 observations and
+        the test set contained 3,419 observations, with 26 training clients and
+        6 held-out test clients.
+    </p>
 
-        <p>
-            The final feature matrix was checked for forbidden future-looking
-            variables. No forbidden features were present in the final modelling
-            matrix.
-        </p>
-    </section>
+    <p>
+        A separate validation audit compared a row-level split with a
+        client-grouped split. The purpose was to test how sensitive measured
+        performance was to the validation design and to provide a more cautious
+        assessment of generalisation to unseen clients.
+    </p>
+
+    <h3>3.6 Leakage Checks</h3>
+
+    <p>
+        The feature vector was checked for target-derived fields, future-looking
+        columns and identifier leakage. The final predictive matrix excluded
+        the target, trend-derived fields, client/content identifiers and
+        provider/model metadata. No forbidden future-looking features were
+        included in the final modelling matrix.
+    </p>
+</section>
 
 
     <section>
@@ -418,24 +489,95 @@
 
 
     <section>
-        <h2>7. Reproducibility</h2>
+    <h2>7. Reproducibility</h2>
 
-        <p>
-            The research workflow is implemented in the project repository using
-            documented notebooks, prepared feature data and exported model outputs.
-        </p>
+    <p>
+        The complete project is available in the public repository. The workflow
+        can be followed through the weekly notebooks and the capstone notebook,
+        with the supporting scripts and processed outputs stored in the
+        repository structure.
+    </p>
 
-        <p>
-            The modelling workflow includes data preparation, train/test splitting,
-            feature encoding, model fitting, validation, leakage checking and
-            output generation.
-        </p>
+    <p>
+        <strong>Repository:</strong>
+        <a href="https://github.com/mkhlor006/Flyrank_internship_ML"
+           target="_blank"
+           rel="noopener noreferrer">
+            FlyRank ML Internship Repository
+        </a>
+    </p>
 
-        <p>
-            Key project artifacts are stored in the repository under the relevant
-            <code>data/processed/</code> and <code>work/outputs/</code> directories.
-        </p>
-    </section>
+    <p>
+        <strong>Capstone notebook:</strong>
+        <a href="https://github.com/mkhlor006/Flyrank_internship_ML/blob/main/work/notebooks/capstone.ipynb"
+           target="_blank"
+           rel="noopener noreferrer">
+            capstone.ipynb
+        </a>
+    </p>
+
+    <p>
+        <strong>Key workflow notebooks:</strong>
+    </p>
+
+    <ul>
+        <li>
+            <a href="https://github.com/mkhlor006/Flyrank_internship_ML/blob/main/work/notebooks/w03_feature_leakage_check.ipynb"
+               target="_blank"
+               rel="noopener noreferrer">
+                ML-05 — Feature Vector and Leakage Check
+            </a>
+        </li>
+
+        <li>
+            <a href="https://github.com/mkhlor006/Flyrank_internship_ML/blob/main/work/notebooks/w04_signal_audit.ipynb"
+               target="_blank"
+               rel="noopener noreferrer">
+                ML-06 — Signal Audit
+            </a>
+        </li>
+
+        <li>
+            <a href="https://github.com/mkhlor006/Flyrank_internship_ML/blob/main/work/notebooks/w04_baseline_score.ipynb"
+               target="_blank"
+               rel="noopener noreferrer">
+                ML-07 — Baseline Score
+            </a>
+        </li>
+
+        <li>
+            <a href="https://github.com/mkhlor006/Flyrank_internship_ML/blob/main/work/notebooks/w05_model.ipynb"
+               target="_blank"
+               rel="noopener noreferrer">
+                ML-08 — Model
+            </a>
+        </li>
+
+        <li>
+            <a href="https://github.com/mkhlor006/Flyrank_internship_ML/blob/main/work/notebooks/w06_validation_audit.ipynb"
+               target="_blank"
+               rel="noopener noreferrer">
+                ML-09 — Validation Audit
+            </a>
+        </li>
+
+        <li>
+            <a href="https://github.com/mkhlor006/Flyrank_internship_ML/blob/main/work/notebooks/w07_action_playbook.ipynb"
+               target="_blank"
+               rel="noopener noreferrer">
+                ML-10 — Action Playbook
+            </a>
+        </li>
+    </ul>
+
+    <p>
+        The repository also contains the feature-preparation scripts and the
+        exported baseline/model outputs used during the project. The analysis is
+        reproducible from the repository workflow and documented notebooks,
+        subject to the availability of the gated FlyRank warehouse release where
+        warehouse-level work is required.
+    </p>
+</section>
 
 
     <section>
